@@ -62,6 +62,8 @@ def test(model, test_loader, device):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
+    return test_loss, correct
+
 if __name__=='__main__':
     
     ap = argparse.ArgumentParser(description='Interface for comparison of vectors of weight matrices of several local minima')
@@ -99,8 +101,14 @@ if __name__=='__main__':
     for epoch in range(1, args.epochs + 1):
 
         train(model, train_loader, optimizer, epoch, device, args.log_interval)
-        test(model, test_loader, device)
+        loss, correct = test(model, test_loader, device)
 
         lr_decayer.decay(optimizer, epoch)
+        
+        save_dict = dict()
+        save_dict['model'] = model.state_dict()
+        save_dict['loss'] = loss
+        save_dict['correct'] = correct
+        save_dict['total'] = len(test_loader.dataset)
 
-        torch.save(model.state_dict(),"models/%s/%s_%d.pt"%(args.name, args.name, epoch))
+        torch.save(save_dict, "models/%s/%s_%d.pt"%(args.name, args.name, epoch))
