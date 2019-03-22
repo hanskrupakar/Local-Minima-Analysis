@@ -6,6 +6,18 @@ import torch
 from torch import optim
 import os
 
+import logging
+logging.basicConfig(format='%(name)s %(asctime)s %(levelname)s %(message)s',
+                    filename='log.txt', filemode='a', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+import sys
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(name)s %(asctime)s %(levelname)s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 class Decay:
     def __init__(self, total_epochs, rate, init_lr=0.1):
         self.total_epochs = total_epochs
@@ -20,7 +32,7 @@ class Decay:
             lr = max(self.init_lr / self.rate, 1e-5)
             self.flag += self.flag//2
             
-            print ("Reducing learning rate from %0.7f to %0.7f"%(self.init_lr, lr))
+            logger.info ("Reducing learning rate from %0.7f to %0.7f"%(self.init_lr, lr))
             self.init_lr = lr
 
             for param_group in optimizer.param_groups:
@@ -38,11 +50,11 @@ def train(model, train_loader, optimizer, epoch, device, log_interval=10):
         loss.backward()
         optimizer.step()
         if batch_idx % log_interval == 0:
-            print('Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+            logger.info('Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
 
-def test(model, test_loader, device):
+def test(model, test_loader, device, log=False):
 
     model.eval()
     
@@ -57,10 +69,11 @@ def test(model, test_loader, device):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+    
+    if log:
+        logger.info('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss, correct, len(test_loader.dataset),
+            100. * correct / len(test_loader.dataset)))
 
     return test_loss, correct
 
@@ -83,9 +96,7 @@ if __name__=='__main__':
     
     lr_decayer = Decay(args.epochs, 0.25, args.lr)
 
-    if not args.cpu and torch.cuda.is_available():
-        model = model.to(device)
-        model.cuda()
+    model = model.to(device)
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.7)
     
@@ -102,8 +113,8 @@ if __name__=='__main__':
 
         train(model, train_loader, optimizer, epoch, device, args.log_interval)
         loss, correct = test(model, test_loader, device)
-
-        lr_decayer.decay(optimizer, epoch)
+        
+        #lr_decayer.decay(optimizer, epoch)
         
         save_dict = dict()
         save_dict['model'] = model.state_dict()

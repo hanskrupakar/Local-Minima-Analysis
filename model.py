@@ -72,12 +72,12 @@ class conv_block(Module):
     def forward(self, x):
         
         c1 = self.conv1(x)
-        c1_b = self.bn1(c1)
-        c1_ba = F.relu(c1_b)
+        #c1_b = self.bn1(c1)
+        c1_ba = F.relu(c1)
 
         c2 = self.conv2(c1_ba)
-        c2_b = self.bn2(c2)
-        c2_ba = F.relu(c2_b)
+        #c2_b = self.bn2(c2)
+        c2_ba = F.relu(c2)
 
         return c2_ba
 
