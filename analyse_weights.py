@@ -2,7 +2,9 @@ import torch
 import glob
 
 import numpy as np
+import random
 import os
+from main import load_model
 
 import logging
 logging.basicConfig(level = logging.INFO, filename='log.txt', filemode='a', format='%(name)s %(levelname)s %(message)s')
@@ -20,27 +22,38 @@ class TrainedModels:
     def __init__(self, models_dir, pytorch_model=False):
         self.models_dir = models_dir
         self.pytorch_model = pytorch_model
+        self.model_files = []
 
-    def get_models(self, cpu=False):  
+    def get_models(self, num=2, epochs=[-1, -1], cpu=False):  
         
+        assert num == len(epochs)
+
+        N = num
         weights, params = [], []
-        for i, f in enumerate(glob.glob(os.path.join(self.models_dir, '*'))):
+        
+        model_files = glob.glob(os.path.join(self.models_dir, '*'))
+        random.shuffle(model_files)
+        
+        for i, f in enumerate(model_files):
+            
+            if not N:
+                break
 
             name = f.split('/')[1]
             ord_files = sorted(glob.glob(os.path.join(f,'*')), key=lambda x: int(x.split('_')[-1][:-3]))
+            
+            if i >= len(epochs):
+                break
 
             network, network_params = [], []
-            for j, epoch_W in enumerate(ord_files):
+            #for j, epoch_W in enumerate(ord_files):
+            for j, epoch_W in enumerate([ord_files[epochs[i]]]):
 
-                if cpu:
-                    model_dict = torch.load(epoch_W, map_location='cpu')
-                else:
-                    model_dict = torch.load(epoch_W)
-
-                loss, correct, total = model_dict['loss'], model_dict['correct'], model_dict['total']
+                self.model_files.append(epoch_W)
+                layers, layer_keys, model_dict = [], [], {}
+                
+                model_dict['model'], loss, correct, total = load_model(epoch_W, cpu)
                 network_params.append([loss, correct, total])
-
-                layers, layer_keys = [], []
                 
                 if self.pytorch_model:
                     model = model_dict['model']
