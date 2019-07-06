@@ -77,6 +77,37 @@ def test(model, test_loader, device, log=False):
 
     return test_loss, correct
 
+def save_model(model, loss, correct, total, fname):
+
+    save_dict = dict()
+    save_dict['model'] = model.state_dict()
+    save_dict['loss'] = loss
+    save_dict['correct'] = correct
+    save_dict['total'] = total 
+
+    torch.save(save_dict, fname)
+
+def load_model(path, stats=None, cpu=False, weight=False):
+    
+    if cpu:
+        if not weight:
+            model_dict = torch.load(path, map_location='cpu')
+        else:
+            model = Net()
+            model.load_state_dict(path)
+    else:
+        if not weight:
+            model_dict = torch.load(path)
+        else:
+            model = Net()
+            model.load_state_dict(path)
+    
+    if not weight:
+        model, loss, correct, total = model_dict['model'], model_dict['loss'], model_dict['correct'], model_dict['total']
+        return model, loss, correct, total
+    else:
+        return model
+
 if __name__=='__main__':
     
     ap = argparse.ArgumentParser(description='Interface for comparison of vectors of weight matrices of several local minima')
@@ -114,12 +145,6 @@ if __name__=='__main__':
         train(model, train_loader, optimizer, epoch, device, args.log_interval)
         loss, correct = test(model, test_loader, device)
         
+        save_model(model, loss, correct, len(test_loader.dataset), "models/%s/%s_%d.pt"%(args.name, args.name, epoch))
         #lr_decayer.decay(optimizer, epoch)
         
-        save_dict = dict()
-        save_dict['model'] = model.state_dict()
-        save_dict['loss'] = loss
-        save_dict['correct'] = correct
-        save_dict['total'] = len(test_loader.dataset)
-
-        torch.save(save_dict, "models/%s/%s_%d.pt"%(args.name, args.name, epoch))

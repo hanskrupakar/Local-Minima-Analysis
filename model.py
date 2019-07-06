@@ -3,6 +3,7 @@ from torch.nn import Conv2d, Linear, BatchNorm2d
 from torch.nn import functional as F
 
 from torch.nn import ModuleList
+import torch
 
 class Net(Module):
 
@@ -13,14 +14,26 @@ class Net(Module):
         self.input_size = input_size
 
         self.conv_params = [{'in_channels': input_channels, 
-                             'out_channels': 20, 
-                             'kernel_size': 7, 
+                             'out_channels': 32, 
+                             'kernel_size': 3, 
+                             'stride': 1, 
+                             'padding': 0},
+                            
+                            {'in_channels': 32, 
+                             'out_channels': 64, 
+                             'kernel_size': 3, 
+                             'stride': 1, 
+                             'padding': 0},
+ 
+                            {'in_channels': 64, 
+                             'out_channels': 64, 
+                             'kernel_size': 3, 
                              'stride': 1, 
                              'padding': 0},
 
-                            {'in_channels': 20, 
-                             'out_channels': 50, 
-                             'kernel_size': 7, 
+                            {'in_channels': 64, 
+                             'out_channels': 32, 
+                             'kernel_size': 3, 
                              'stride': 1, 
                              'padding': 0}]
 
@@ -80,6 +93,15 @@ class conv_block(Module):
         c2_ba = F.relu(c2)
 
         return c2_ba
+    
+    def scale(self, const=2):
+        
+        with torch.no_grad():
+            self.conv1.weight.masked_scatter_(torch.ones(self.conv1.weight.size(), device=self.conv1.weight.device, dtype=torch.uint8), self.conv1.weight*const)
+            self.conv1.bias.masked_scatter_(torch.ones(self.conv1.bias.size(), device=self.conv1.bias.device, dtype=torch.uint8), self.conv1.bias*const)
+
+            self.conv2.weight.masked_scatter_(torch.ones(self.conv2.weight.size(), device=self.conv2.weight.device, dtype=torch.uint8), self.conv2.weight*(1.0/const))
+            self.conv2.bias.masked_scatter_(torch.ones(self.conv2.bias.size(), device=self.conv2.bias.device, dtype=torch.uint8), self.conv2.bias*(1.0/const))
 
 if __name__=='__main__':
     
