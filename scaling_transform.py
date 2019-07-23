@@ -21,8 +21,8 @@ if __name__ == '__main__':
         
     ap = argparse.ArgumentParser()
     ap.add_argument('model', help='Path to model weights file to load')
-    ap.add_argument('layer', type=int, help='Layer (and layer+1) of network to apply transforms * N followed by * 1/N')
     ap.add_argument('factor', type=float, help='Factor to use for scalar multiplication')
+    ap.add_argument('layer', type=int, nargs='+', help='Layer (and layer+1) of network to apply transforms * N followed by * 1/N')
     args = ap.parse_args()
     
     devc = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -40,7 +40,8 @@ if __name__ == '__main__':
     loss, correct = test(model, test_loader, device)
     print ("Number of correct predictions before scaling: %d"%(correct))
     
-    scale_by_constant(model, args.factor, args.layer)
+    for layer in args.layer:
+        scale_by_constant(model, args.factor, layer)
 
     loss, correct = test(model, test_loader, device)
     print ("Number of correct predictions after scaling: %d"%(correct))

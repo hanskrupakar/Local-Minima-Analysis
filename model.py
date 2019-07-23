@@ -17,26 +17,31 @@ class Net(Module):
                              'out_channels': 32, 
                              'kernel_size': 3, 
                              'stride': 1, 
-                             'padding': 0},
+                             'padding': 0,
+                             'bias': True},
                             
                             {'in_channels': 32, 
+                             'out_channels': 128, 
+                             'kernel_size': 3, 
+                             'stride': 1, 
+                             'padding': 0,
+                             'bias': True},
+                             
+                             {'in_channels': 128, 
                              'out_channels': 64, 
                              'kernel_size': 3, 
                              'stride': 1, 
-                             'padding': 0},
+                             'padding': 0,
+                             'bias': True},
+                             
+                             {'in_channels': 64, 
+                             'out_channels': 10, 
+                             'kernel_size': 3, 
+                             'stride': 1, 
+                             'padding': 0,
+                             'bias': True},
+                             ]
  
-                            {'in_channels': 64, 
-                             'out_channels': 64, 
-                             'kernel_size': 3, 
-                             'stride': 1, 
-                             'padding': 0},
-
-                            {'in_channels': 64, 
-                             'out_channels': 32, 
-                             'kernel_size': 3, 
-                             'stride': 1, 
-                             'padding': 0}]
-
         self.conv_layers = []
         
         self.size = self.input_size
@@ -73,14 +78,14 @@ class Net(Module):
 
 class conv_block(Module):
     
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, bias=False):
         
         super(conv_block, self).__init__()
 
-        self.conv1 = Conv2d(in_channels, out_channels, kernel_size, stride, padding)
-        self.bn1 = BatchNorm2d(out_channels)
-        self.conv2 = Conv2d(out_channels, out_channels, kernel_size, stride, padding)
-        self.bn2 = BatchNorm2d(out_channels)
+        self.conv1 = Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=bias)
+        #self.bn1 = BatchNorm2d(out_channels)
+        self.conv2 = Conv2d(out_channels, out_channels, kernel_size, stride, padding, bias=bias)
+        #self.bn2 = BatchNorm2d(out_channels)
     
     def forward(self, x):
         
@@ -97,11 +102,19 @@ class conv_block(Module):
     def scale(self, const=2):
         
         with torch.no_grad():
-            self.conv1.weight.masked_scatter_(torch.ones(self.conv1.weight.size(), device=self.conv1.weight.device, dtype=torch.uint8), self.conv1.weight*const)
-            self.conv1.bias.masked_scatter_(torch.ones(self.conv1.bias.size(), device=self.conv1.bias.device, dtype=torch.uint8), self.conv1.bias*const)
+            self.conv1.weight.masked_scatter_(
+                    torch.ones(self.conv1.weight.size(), device=self.conv1.weight.device, dtype=torch.uint8), 
+                    self.conv1.weight*const)
+            #self.conv1.bias.masked_scatter_(
+            #        torch.ones(self.conv1.bias.size(), device=self.conv1.bias.device, dtype=torch.uint8), 
+            #        self.conv1.bias*const)
 
-            self.conv2.weight.masked_scatter_(torch.ones(self.conv2.weight.size(), device=self.conv2.weight.device, dtype=torch.uint8), self.conv2.weight*(1.0/const))
-            self.conv2.bias.masked_scatter_(torch.ones(self.conv2.bias.size(), device=self.conv2.bias.device, dtype=torch.uint8), self.conv2.bias*(1.0/const))
+            self.conv2.weight.masked_scatter_(
+                    torch.ones(self.conv2.weight.size(), device=self.conv2.weight.device, dtype=torch.uint8), 
+                    self.conv2.weight*(1.0/const))
+            #self.conv2.bias.masked_scatter_(
+            #        torch.ones(self.conv2.bias.size(), device=self.conv2.bias.device, dtype=torch.uint8), 
+            #        self.conv2.bias*(1.0/const))
 
 if __name__=='__main__':
     

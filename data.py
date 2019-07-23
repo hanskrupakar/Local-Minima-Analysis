@@ -17,7 +17,7 @@ formatter = logging.Formatter('%(name)s %(asctime)s %(levelname)s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def get_mnist_loaders(cuda_flag, dataset_path, val=False, validation_size=5000, batch_size=64, test_batch_size=1000):
+def get_mnist_loaders(cuda_flag, dataset_path, val=False, validation_size=5000, batch_size=64, test_batch_size=1000, num_test_images=10000):
    
     kwargs = {'num_workers': 1, 'pin_memory': True} if cuda_flag and torch.cuda.is_available() else {}
     
@@ -43,12 +43,19 @@ def get_mnist_loaders(cuda_flag, dataset_path, val=False, validation_size=5000, 
         val_loader = torch.utils.data.DataLoader(train_dataset,
                             batch_size=batch_size, sampler=val_sampler, **kwargs)
     
-    test_loader = torch.utils.data.DataLoader(
-                        datasets.MNIST(dataset_path, train=False, transform=transforms.Compose([
+    test_dataset = datasets.MNIST(dataset_path, train=False, transform=transforms.Compose([
                             transforms.ToTensor(),
                             transforms.Normalize((0.1307,), (0.3081,))
-                        ])),
-                        batch_size=test_batch_size, shuffle=True, **kwargs)
+                        ]))
+    
+    test_indices = list(range(len(test_dataset)))
+
+    assert num_test_images <= len(test_dataset)
+
+    test_sampler = SubsetRandomSampler(test_indices[:num_test_images])
+    test_loader = torch.utils.data.DataLoader(
+                        test_dataset,
+                        batch_size=test_batch_size, sampler=test_sampler, **kwargs)
     
     logger.info('Using MNIST dataset for this experiment')
 

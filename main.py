@@ -38,6 +38,17 @@ class Decay:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
 
+def compute_hessian(model, train_loader, device):
+    
+    model.train()
+
+    for batch_idx, (data, target) in enumerate(train_loader):
+        
+        data, target = data.to(device), target.to(device)
+        out = model(data).trace()
+
+
+
 def train(model, train_loader, optimizer, epoch, device, log_interval=10):
     
     model.train()
@@ -143,8 +154,8 @@ if __name__=='__main__':
     for epoch in range(1, args.epochs + 1):
 
         train(model, train_loader, optimizer, epoch, device, args.log_interval)
-        loss, correct = test(model, test_loader, device)
-        
+        #loss, correct = test(model, test_loader, device)
+        loss, correct = 0, 0 
         save_model(model, loss, correct, len(test_loader.dataset), "models/%s/%s_%d.pt"%(args.name, args.name, epoch))
         #lr_decayer.decay(optimizer, epoch)
         
