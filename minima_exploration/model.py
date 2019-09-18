@@ -26,8 +26,8 @@ class Net(Module):
                              'stride': 1, 
                              'padding': 0,
                              'bias': True},
-                             
-                             {'in_channels': 128, 
+                              
+                            {'in_channels': 128, 
                              'out_channels': 64, 
                              'kernel_size': 3, 
                              'stride': 1, 
@@ -40,8 +40,9 @@ class Net(Module):
                              'stride': 1, 
                              'padding': 0,
                              'bias': True},
-                             ]
- 
+                           
+                            ]
+
         self.conv_layers = []
         
         self.size = self.input_size
